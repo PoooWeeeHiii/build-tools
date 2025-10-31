@@ -1,0 +1,13 @@
+%YAML 1.1
+# ROS index file
+# see REP 143: http://ros.org/reps/rep-0143.html
+---
+distributions:
+  loong:
+    distribution: [loong/distribution.yaml]
+    distribution_cache: http://repo.ros2.org/rosdistro_cache/loong-cache.yaml.gz
+  pixiu:
+    distribution: [pixiu/distribution.yaml]
+    distribution_cache: http://repo.ros2.org/rosdistro_cache/pixiu-cache.yaml.gz
+type: index
+version: 3

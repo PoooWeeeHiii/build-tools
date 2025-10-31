@@ -1,0 +1,64 @@
+1）搭建docker环境
+docker pull ubuntu:24.04
+docker pull ubuntu:22.04
+
+docker run -dit --name=u2204_lfb -v /dev:/dev -v /home/:/home/ -v /root/:/root/ -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -w /rnet=host ubuntu:22.04 && docker start u2204_lfb && docker exec -it u2204_lfb bash
+docker run -dit --name=u2204_lfb -v /dev:/dev -v /home/:/home/ -v /root/:/root/ -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -w /root/ --privileged --net=host ubuntu:22.04 && docker start u2204_lfb && docker exec -it u2204_lfb bash
+
+2）安装必要应用
+apt install python3.12-venv python3-full git-buildpackage
+
+apt install -y \
+        build-essential \
+        python3-flake8  \
+        python3-pytest-cov \
+        python3-pip \
+        python3-setuptools \
+        pip git wheel python3-yaml
+
+3）准备python环境
+python3 -m venv .venv && source .venv/bin/activate && \
+pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
+pip install http://1.94.193.239/yumrepo/agiros/agirosdep/agirosdep-0.25.1-py3-none-any.whl && \
+pip install ../agiros-bloom/dist/bloom-0.13.0-py3-none-any.whl && \
+pip install -r requirements.txt
+
+4）备份成果
+scp -r root@123.249.29.57:/root/lfb/agiros-tools/build-tools/*.py . && \
+scp -r root@123.249.29.57:/root/lfb/agiros-tools/build-tools/*.yaml . && \
+scp -r root@123.249.29.57:/root/lfb/agiros-tools/build-tools/*.sh . && \
+scp -r root@123.249.29.57:/root/lfb/agiros-tools/build-tools/*.txt . && \
+scp -r root@123.249.29.57:/root/lfb/agiros-tools/build-tools/*.md . && \
+scp -r root@123.249.29.57:/root/lfb/agiros-tools/build-tools/agiros_rosdistro .
+
+scp *.gz root@123.249.29.57:/root/lfb/agiros-tools/build-tools/rosdep_rosdistro/sources.cache
+
+
+4) git
+-----------------------------全局配置
+git config --global user.name "frank152342"
+git config --global user.mail "sleaf2010@hotmail.com"
+git config --global user.email "sleaf2010@hotmail.com"
+git config --global --list   #查看
+
+mkdir agiros && cd agiros
+git init
+git remote add origin https://gitee.com/frank152342/agiros.git
+git checkout --orphan v25.06-Release   #切换到一个新分支
+git rm -rf .  # 删除所有文件（如果有）
+----------------将文件复制到这里
+git add .
+git commit --allow-empty -m "v25.06发布范围"
+git push origin v25.06-Release
+
+
+-------------------------------至此，文件传入了,开始打标签
+git checkout v25.06-Release
+git tag 25.06
+git push origin 25.06   #推送分支
+
+
+-------------------------------验证
+git tag    #查看本地分支
+git fetch --tags
+git tag -l
