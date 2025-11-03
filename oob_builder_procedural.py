@@ -34,6 +34,7 @@ class Defaults:
     """集中管理 argparse 默认值，可通过环境变量覆盖。"""
     AGIROS_DISTRO: str = os.environ.get("AGIROS_DISTRO", "loong")
     ROS2_DISTRO: str = os.environ.get("ROS2_DISTRO", "jazzy")
+    OS_NAMECODE: str = os.environ.get("OS_NAMECODE", "Unknow")
     UBUNTU_DEFAULT: str = os.environ.get("AGIROS_UBUNTU_DEFAULT", "jammy")
     OPENEULER_DEFAULT: str = os.environ.get("AGIROS_OE_DEFAULT", "24")
     # 多值用逗号分隔覆盖：AGIROS_OE_FALLBACK="22,23"

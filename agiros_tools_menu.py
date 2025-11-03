@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 from change_ros2agiros import change_ros2agiros_tag 
+from os_base import get_sys_info
 
 try:
     from rich import box
@@ -140,10 +141,11 @@ def to_display_name(state: "MenuState", pkg_path: Path) -> str:
 
 @dataclass
 class MenuState:
-    _agiros_release_Tags: str = "loong/2025-12"
-    _ros2_release_Tags: str = "humble/2025-10-20" # 
-    #_agiros_release_Tags: str = "pixiu/2025-12"
-    #_ros2_release_Tags: str = "jazzy/2025-10-4" # https://github.com/ros/rosdistro/blob/humble/2025-10-20/humble/distribution.yaml
+    #_agiros_release_Tags: str = "loong/2025-12"
+    #_ros2_release_Tags: str = "humble/2025-10-20" # 
+
+    _agiros_release_Tags: str = "pixiu/2025-12"
+    _ros2_release_Tags: str = "jazzy/2025-10-14" # https://github.com/ros/rosdistro/blob/humble/2025-10-20/humble/distribution.yaml
 
     _agiros_distro: str = _agiros_release_Tags.split("/")[0] 
     _ros2_distro: str = _ros2_release_Tags.split("/")[0]  # 取_release_Tags第一个斜杠前面的部分
@@ -178,6 +180,7 @@ class MenuState:
     build_queue: List[BuildTask] = field(default_factory=list)
     queue_packages: List[str] = field(default_factory=list)
     package_status: Dict[str, bool] = field(default_factory=dict)
+    os_name, os_version, os_codename, os_arch, python_version = get_sys_info()
 
     def __post_init__(self) -> None:
         self.queue_file = self._normalize_path(self.queue_file)
@@ -208,6 +211,7 @@ class MenuState:
             "ROS2_DISTRO": self.ros2_distro,
             "AGIROS_DISTRO": self.agiros_distro,
             "AGIROS_UBUNTU_DEFAULT": self.ubuntu_version,
+            "OS_NAMECODE": self.os_codename,
             "AGIROS_OE_DEFAULT": self.openeuler_default,
             "AGIROS_OE_FALLBACK": ",".join(self.openeuler_fallback),
             "AGIROS_BLOOM_BIN": self.bloom_bin,
@@ -524,15 +528,18 @@ class MenuState:
         self.queue_meta_file.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
 
     def summary_rows(self) -> List[Tuple[str, str]]:
+        
         return [
+            ("操作系统", f"名称:{self.os_name} 版本:{self.os_version} 版本代号:{self.os_codename} 架构:{self.os_arch}"),
+            ("Python 版本", self.python_version),
             ("distribution.yaml URL", self.distribution_url),
             ("distribution.yaml 本地目录", f"预先存放在源码code目录下,将不从URL下载"),
             ("Release 仓库目录", str(self.release_dir)),
             ("源码code目录", str(self.code_dir)),
             ("ROS2 发行版", self.ros2_distro),
             ("AGIROS 发行版", self.agiros_distro),
-            ("Ubuntu 版本", self.ubuntu_version),
-            ("openEuler 默认", self.openeuler_default),
+            ("Ubuntu 代号", f"目标:{self.ubuntu_version}  当前版本代号:{self.os_codename}" if self.os_name == 'Ubuntu' else f"{self.ubuntu_version}"), #如果当前系统是ubuntu，则显示ubuntu版本
+            ("openEuler 默认", f"目标:{self.openeuler_default}  当前版本代号:{self.os_codename}" if self.os_name == 'openEuler' else f"{self.openeuler_default}"), #如果当前系统是openEuler，则显示openEuler默认版本
             ("openEuler 回退", ", ".join(self.openeuler_fallback) or "-"),
             ("bloom 命令", self.bloom_bin),
             ("批量生成 gbp.conf", "启用" if self.auto_generate_gbp else "关闭"),

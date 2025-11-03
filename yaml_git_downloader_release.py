@@ -123,6 +123,11 @@ def safe_git_clone_or_resume(repo_url, repo_path, branch_or_tag=None) -> bool:
 #如果jazzy_2025-10-14_jazzy-distribution.yaml已存在，则跳过下载
 def download_repos_from_distribution_yaml(yaml_url: str, target_dir: str = TARGET_DIR, code_or_tracks: str = "code"):
     os.makedirs(target_dir, exist_ok=True)
+    
+
+    # 将GitHub blob URL转换为raw URL以获取原始文件内容
+    if "github.com" in yaml_url and "/blob/" in yaml_url:
+        yaml_url = yaml_url.replace("/blob/", "/raw/")
     log_message(f"[Start] 从 {yaml_url} 下载 distribution.yaml", Color.BLUE)
 
     #如果distribution.yaml文件存在，则读取文件内容到yaml_content, 否则 下载 YAML 文件，并读取内容到yaml_content

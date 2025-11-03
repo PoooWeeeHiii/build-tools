@@ -36,10 +36,10 @@ scp *.gz root@123.249.29.57:/root/lfb/agiros-tools/build-tools/rosdep_rosdistro/
 
 4) git
 -----------------------------全局配置
-git config --global user.name "frank152342"  && \
+git config --global user.name "frank152342" && \
 git config --global user.mail "sleaf2010@hotmail.com" && \
 git config --global user.email "sleaf2010@hotmail.com" && \
-git config --global --list   
+git config --global --list   #查看
 
 mkdir agiros && cd agiros
 git init
@@ -48,7 +48,7 @@ git checkout --orphan v25.06-Release   #切换到一个新分支
 git rm -rf .  # 删除所有文件（如果有）
 ----------------将文件复制到这里
 git add .
-git commit --allow-empty -m "第一个版本"
+git commit --allow-empty -m "v25.06发布范围"
 git push origin v25.06-Release
 
 
