@@ -8,7 +8,7 @@ import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
-from change_ros2agiros import change_ros2agiros_tag #change_ros2agiros_tag(folder, self.logger)
+from change_ros2agiros import change_ros2agiros_tag 
 
 try:
     from rich import box
@@ -141,8 +141,9 @@ def to_display_name(state: "MenuState", pkg_path: Path) -> str:
 @dataclass
 class MenuState:
     _agiros_release_Tags: str = "loong/2025-12"
-    #_ros2_release_Tags: str = "humble/2025-10-20" # 
-    _ros2_release_Tags: str = "jazzy/2025-10-4" # https://github.com/ros/rosdistro/blob/humble/2025-10-20/humble/distribution.yaml
+    _ros2_release_Tags: str = "humble/2025-10-20" # 
+    #_agiros_release_Tags: str = "pixiu/2025-12"
+    #_ros2_release_Tags: str = "jazzy/2025-10-4" # https://github.com/ros/rosdistro/blob/humble/2025-10-20/humble/distribution.yaml
 
     _agiros_distro: str = _agiros_release_Tags.split("/")[0] 
     _ros2_distro: str = _ros2_release_Tags.split("/")[0]  # 取_release_Tags第一个斜杠前面的部分
@@ -157,7 +158,7 @@ class MenuState:
     code_dir: Path = Path(os.environ.get("AGIROS_CODE_DIR", _ros2_code_dir))
     code_label: str = os.environ.get("AGIROS_CODE_LABEL", "code_dir")
     
-    ros_distro: str = os.environ.get("AGIROS_DISTRO", _agiros_distro)
+    agiros_distro: str = os.environ.get("AGIROS_DISTRO", _agiros_distro)
     ubuntu_version: str = os.environ.get("AGIROS_UBUNTU_DEFAULT", "jammy") # "noble"
     openeuler_default: str = os.environ.get("AGIROS_OE_DEFAULT", "24")
     openeuler_fallback: List[str] = field(default_factory=lambda: [item.strip() for item in os.environ.get("AGIROS_OE_FALLBACK", "22,23").split(",") if item.strip()])
@@ -205,7 +206,7 @@ class MenuState:
             "AGIROS_CODE_DIR": str(self.code_dir),
             "AGIROS_CODE_LABEL": self.code_label,
             "ROS2_DISTRO": self.ros2_distro,
-            "AGIROS_DISTRO": self.ros_distro,
+            "AGIROS_DISTRO": self.agiros_distro,
             "AGIROS_UBUNTU_DEFAULT": self.ubuntu_version,
             "AGIROS_OE_DEFAULT": self.openeuler_default,
             "AGIROS_OE_FALLBACK": ",".join(self.openeuler_fallback),
@@ -266,7 +267,7 @@ class MenuState:
         _set_path("DEB_OUT", "deb_out_dir")
         _set_str("AGIROS_CODE_LABEL", "code_label")
         _set_str("ROS2_DISTRO", "ros2_distro")
-        _set_str("AGIROS_DISTRO", "ros_distro")
+        _set_str("AGIROS_DISTRO", "agiros_distro")
         _set_str("AGIROS_UBUNTU_DEFAULT", "ubuntu_version")
         _set_str("AGIROS_OE_DEFAULT", "openeuler_default")
         _set_list("AGIROS_OE_FALLBACK", "openeuler_fallback")
@@ -524,11 +525,12 @@ class MenuState:
 
     def summary_rows(self) -> List[Tuple[str, str]]:
         return [
-            ("Release 仓库目录", str(self.release_dir)),
-            ("源码目录", str(self.code_dir)),
             ("distribution.yaml URL", self.distribution_url),
-            ("Tracks ROS2 发行版", self.ros2_distro),
-            ("AGIROS 发行版", self.ros_distro),
+            ("distribution.yaml 本地目录", f"预先存放在源码code目录下,将不从URL下载"),
+            ("Release 仓库目录", str(self.release_dir)),
+            ("源码code目录", str(self.code_dir)),
+            ("ROS2 发行版", self.ros2_distro),
+            ("AGIROS 发行版", self.agiros_distro),
             ("Ubuntu 版本", self.ubuntu_version),
             ("openEuler 默认", self.openeuler_default),
             ("openEuler 回退", ", ".join(self.openeuler_fallback) or "-"),
@@ -573,12 +575,12 @@ def handle_download_release(state: MenuState) -> None:
     if _code_or_tracks:
         code_or_tracks = "code"
         dir = str(state.code_dir)
+        target = ask_text("源码(code)仓库存放目录", dir)
     else:
         code_or_tracks = "tracks"
         dir = str(state.release_dir)
+        target = ask_text("Release(tracks)仓库存放目录", dir)
         
-
-    target = ask_text("Release 仓库存放目录", dir)
     if not target:
         console.print("[yellow]已取消：缺少目录[/]")
         return
@@ -727,16 +729,16 @@ def prompt_package_path(state: MenuState) -> Optional[Path]:
 
 def ros2agiros_menu(state: MenuState) -> None:
     while True:
-        scope = ask_select("请选择操作范围", ["单包", "批量", "返回"])
+        scope = ask_select("请选择操作范围", ["单包", f"批量:{state.code_dir}", "返回"])
         if scope in (None, "返回"):
             continue
         if scope == "单包":
             pkg_path = prompt_package_path(state)
             if not pkg_path:
                 continue
-            change_ros2agiros_tag(pkg_path, from_str=state.ros2_distro, to_str=state.ros_distro)
+            change_ros2agiros_tag(pkg_path, from_str=state.ros2_distro, to_str=state.agiros_distro)
         else:
-            change_ros2agiros_tag(state.code_dir, from_str=state.ros2_distro, to_str=state.ros_distro)
+            change_ros2agiros_tag(state.code_dir, from_str=state.ros2_distro, to_str=state.agiros_distro)
         
 
 def build_bloom_command(state: MenuState, kind: str) -> List[str]:
@@ -759,19 +761,19 @@ def run_single_bloom(state: MenuState, kind: str, package_path: Path, generate_g
     if kind == "rpm" and "agirosrpm" not in cmd and "generate_cmd" not in " ".join(cmd):
         cmd.append("agirosrpm")
     if kind in {"debian", "gbp"}:
-        cmd += ["--ros-distro", state.ros_distro, "--os-name", "ubuntu", "--os-version", state.ubuntu_version]
+        cmd += ["--ros-distro", state.agiros_distro, "--os-name", "ubuntu", "--os-version", state.ubuntu_version]
         if generate_gbp:
             cmd.append("--generate-gbp")
             cmd += ["--tracks-distro", state.ros2_distro]
-            cmd += ["--distro", state.ros_distro]
+            cmd += ["--distro", state.agiros_distro]
             cmd += ["--pkg", package_path.name]
     else:
-        cmd += ["--ros-distro", state.ros_distro, "--os-name", "openeuler", "--os-version", state.openeuler_default]
+        cmd += ["--ros-distro", state.agiros_distro, "--os-name", "openeuler", "--os-version", state.openeuler_default]
     env = os.environ.copy()
     if generate_gbp:
         env["OOB_TRACKS_DIR"] = str(state.release_dir)
         env["OOB_TRACKS_DISTRO"] = state.ros2_distro
-        env["AGIROS_DISTRO"] = state.ros_distro
+        env["AGIROS_DISTRO"] = state.agiros_distro
     rc = run_stream(cmd, cwd=package_path, env=env)
     if rc == 0:
         console.print("[green]完成[/]")
@@ -792,7 +794,7 @@ def run_batch_bloom(state: MenuState, mode: str) -> None:
         "--code-dir",
         str(state.code_dir),
         "--ros-distro",
-        state.ros_distro,
+        state.agiros_distro,
         "--ubuntu-default",
         state.ubuntu_version,
         "--openeuler-default",
@@ -1191,10 +1193,10 @@ def handle_configuration(state: MenuState) -> None:
             if value:
                 state.distribution_url = value
         elif choice == "修改 ROS/Tracks 配置":
-            ros = ask_text("AGIROS 发行版", state.ros_distro)
-            tracks = ask_text("Tracks ROS2 发行版", state.ros2_distro)
+            ros = ask_text("AGIROS 发行版", state.agiros_distro)
+            tracks = ask_text("ROS2 发行版", state.ros2_distro)
             ubuntu = ask_text("Ubuntu 版本", state.ubuntu_version)
-            state.ros_distro = ros or state.ros_distro
+            state.agiros_distro = ros or state.agiros_distro
             state.ros2_distro = tracks or state.ros2_distro
             state.ubuntu_version = ubuntu or state.ubuntu_version
         elif choice == "修改 openEuler 参数":
@@ -1281,7 +1283,7 @@ def main() -> None:
         choice = ask_select(
             "请选择操作",
             [
-                "下载 release 仓库（tracks或code）",
+                "从distribution.yaml下载release仓库（tracks）或源码（code）",
                 "处理 tracks.yaml / 下载源码",
                 "源码替换ros->agiros",
                 "Bloom 打包",
@@ -1292,7 +1294,7 @@ def main() -> None:
                 "退出",
             ],
         )
-        if choice == "下载 release 仓库（tracks或code）":
+        if choice == "从distribution.yaml下载release仓库（tracks）或源码（code）":
             handle_download_release(state)
         elif choice == "处理 tracks.yaml / 下载源码":
             handle_tracks_download(state)

@@ -89,12 +89,14 @@ def safe_replace(line: str, from_str:str, to_str:str) -> str:
     """执行安全替换的主逻辑，按照预定义的替换规则处理文本行"""
 
     #准备数据---------------------
-    ROSJAZZY_DASH   = re.compile(rf"ros-{from_str}-")  # 匹配带连字符的ros-jazzy-
-    ROSJAZZY        = re.compile(rf"ros-{from_str}")   # 匹配ros-jazzy（不带连字符）
-
+    ROSJAZZY_DASH   = re.compile(r"ros-jazzy-")  # 匹配带连字符的ros-jazzy-
+    ROSJAZZY        = re.compile(r"ros-jazzy")   # 匹配ros-jazzy（不带连字符）
+    J_LOWER         = re.compile(r"jazzy")             # 匹配小写jazzy
+    J_TITLE         = re.compile(r"Jazzy")             # 匹配首字母大写Jazzy
+    J_UPPER         = re.compile(r"JAZZY")             # 匹配全大写JAZZY
     # 仅保护片段的模式（不跳过整行）
-    IMAGE_ROS_JAZZY_PAT  = re.compile(rf"(^|\s)image\s*:\s*ros:{from_str}\b", re.IGNORECASE)  # 匹配image: ros:jazzy
-    TURTLE_JAZZY_PNG_PAT = re.compile(rf"turtles\s*\.\s*append\(\s*['\"]{from_str}\.png['\"]\s*\)")  # 匹配turtles.append("jazzy.png")
+    IMAGE_ROS_JAZZY_PAT  = re.compile(r"(^|\s)image\s*:\s*ros:jazzy\b", re.IGNORECASE)  # 匹配image: ros:jazzy
+    TURTLE_JAZZY_PNG_PAT = re.compile(r"turtles\s*\.\s*append\(\s*['\"]jazzy\.png['\"]\s*\)")  # 匹配turtles.append("jazzy.png")
     IMG_ROS_JAZZY_TOKEN    = "[[[HOLD_TOKEN_1]]]"     # 临时占位符，用于保护ros:jazzy片段
     TURTLE_JAZZY_PNG_TOKEN = "[[[HOLD_TOKEN_2]]]"     # 临时占位符，用于保护jazzy.png片段
 
@@ -108,12 +110,12 @@ def safe_replace(line: str, from_str:str, to_str:str) -> str:
     # 保护image: ros:jazzy里的"ros:jazzy"
     def _hold_image_ros_jazzy(m: re.Match) -> str:
         # 仅替换匹配中的ros:jazzy，不动前面的image:与空白
-        return m.group(0).replace(f"ros:{from_str}", IMG_ROS_JAZZY_TOKEN)
+        return m.group(0).replace("ros:jazzy", IMG_ROS_JAZZY_TOKEN)
     line = IMAGE_ROS_JAZZY_PAT.sub(_hold_image_ros_jazzy, line)
 
     # 保护turtles.append("jazzy.png")里的"jazzy.png"
     line = TURTLE_JAZZY_PNG_PAT.sub(
-        lambda m: m.group(0).replace(f"{from_str}.png", TURTLE_JAZZY_PNG_TOKEN),
+        lambda m: m.group(0).replace("jazzy.png", TURTLE_JAZZY_PNG_TOKEN),
         line
     )
 
@@ -121,35 +123,17 @@ def safe_replace(line: str, from_str:str, to_str:str) -> str:
 
     # 执行核心替换规则
     # 1) ros-jazzy（先带连字符，再不带）
-    line = ROSJAZZY_DASH.sub(f"agiros-{to_str}-", line)
-    line = ROSJAZZY.sub(f"agiros-{to_str}", line)
+    line = ROSJAZZY_DASH.sub("agiros-loong-", line)
+    line = ROSJAZZY.sub("agiros-loong", line)
 
     # 3+4) 路径与发行名替换
     line = line.replace("/opt/ros/", "/opt/agiros/")
-    if from_str == "jazzy":
-        J_LOWER         = re.compile(rf"{from_str}")       # 匹配小写jazzy
-        J_TITLE         = re.compile(r"Jazzy")             # 匹配首字母大写Jazzy
-        J_UPPER         = re.compile(r"JAZZY")             # 匹配全大写JAZZY
-    elif from_str == "humble":
-        J_LOWER         = re.compile(rf"{from_str}")        # 匹配小写humble
-        J_TITLE         = re.compile(r"Humble")             # 匹配首字母大写Humble
-        J_UPPER         = re.compile(r"HUMBLE")             # 匹配全大写HUMBLE
-    else:
-        print(f"from_str其取值无效： {from_str} ")
-
-    if to_str == "loong":
-        line = J_UPPER.sub("LOONG", line)   # 替换全大写JAZZY
-        line = J_TITLE.sub("Loong", line)   # 替换首字母大写Jazzy
-        line = J_LOWER.sub(f"{to_str}", line)   # 替换小写jazzy
-    elif to_str == "pixiu":
-        line = J_UPPER.sub("PIXIU", line)   # 替换全大写JAZZY
-        line = J_TITLE.sub("Pixiu", line)   # 替换首字母大写Jazzy
-        line = J_LOWER.sub(f"{to_str}", line)   # 替换小写jazzy    
-    else:
-        print(f"to_str其取值无效： {to_str} ")    
+    line = J_UPPER.sub("LOONG", line)   # 替换全大写JAZZY
+    line = J_TITLE.sub("Loong", line)   # 替换首字母大写Jazzy
+    line = J_LOWER.sub("loong", line)   # 替换小写jazzy
 
     # 6–11) 结构化键/模板替换（先于独立ros的处理，以免被误伤）
-    line = re.sub(rf"ros:{from_str}\b", f"agiros:{to_str}", line)  # 替换ros:jazzy
+    line = re.sub(r"ros:jazzy\b", "agiros:loong", line)  # 替换ros:jazzy
     line = re.sub(r"(ROS_REPO:\s*\[)ros(\])", r"\1agiros\2", line)  # 替换ROS_REPO字段
     line = line.replace("ros-[ROS_DISTRO]", "agiros-[ROS_DISTRO]")  # 替换模板变量
     line = line.replace("ros-%s", "agiros-%s")  # 替换格式化字符串
@@ -159,8 +143,8 @@ def safe_replace(line: str, from_str:str, to_str:str) -> str:
     # 5) 独立的ros：不进行任何替换（ros-、.ros/.ros.、ros::以及其它独立ros全部保持原样）
 
     # 恢复被保护的片段
-    line = line.replace(IMG_ROS_JAZZY_TOKEN, f"ros:{from_str}")
-    line = line.replace(TURTLE_JAZZY_PNG_TOKEN, f"{from_str}.png")
+    line = line.replace(IMG_ROS_JAZZY_TOKEN, "ros:jazzy")
+    line = line.replace(TURTLE_JAZZY_PNG_TOKEN, "jazzy.png")
 
     # 恢复关键字和URL
     line = unprotect_keywords(line)
@@ -264,3 +248,7 @@ def change_ros2agiros_tag(root_dir: str, from_str:str, to_str:str, logger=None) 
 
     print(f"\n总共处理了 {processed_files} 个文件，修改了 {modified_files} 个文件")
 
+
+if __name__ == "__main__":
+    orig_dir = "3replaced"  # 指定要处理的根目录
+    change_ros2agiros_tag(orig_dir)   # 开始处理目录

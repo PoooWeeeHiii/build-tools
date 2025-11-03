@@ -284,7 +284,7 @@ def main():
                     if sub_need_ubuntu:
                         base = build_cmd_for('debian', args.bloom_bin)
                         deb_cmd = base + (["agirosdebian"] if not is_direct_module_cmd(base) else []) + [
-                            "--ros-distro", args.ros_distro,
+                            "--ros-distro", args.agiros_distro,
                             "--os-name", "ubuntu",
                             "--os-version", args.ubuntu_default,
                         ]
@@ -296,10 +296,10 @@ def main():
                             deb_env["OOB_TRACKS_DIR"] = str(release_dir)
                             tracks_key = deb_env.get("ROS2_DISTRO") or deb_env.get("OOB_TRACKS_DISTRO") or "jazzy"
                             deb_env["OOB_TRACKS_DISTRO"] = tracks_key
-                            deb_env["AGIROS_DISTRO"] = args.ros_distro
+                            deb_env["AGIROS_DISTRO"] = args.agiros_distro
                             deb_cmd.append("--generate-gbp")
                             deb_cmd.extend(["--tracks-distro", tracks_key])
-                            deb_cmd.extend(["--distro", args.ros_distro])
+                            deb_cmd.extend(["--distro", args.agiros_distro])
                             deb_cmd.extend(["--pkg", subpkg.name])
                         rc, out = run(deb_cmd, cwd=subpkg, dry_run=args.dry_run, env=deb_env)
                         if rc == 0:
@@ -319,7 +319,7 @@ def main():
                         for ver in versions:
                             base = build_cmd_for('rpm', args.bloom_bin)
                             rpm_cmd = base + (["agirosrpm"] if not is_direct_module_cmd(base) else []) + [
-                                "--ros-distro", args.ros_distro,
+                                "--ros-distro", args.agiros_distro,
                                 "--os-name", "openeuler",
                                 "--os-version", ver,
                             ]
