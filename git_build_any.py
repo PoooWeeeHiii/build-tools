@@ -311,9 +311,18 @@ def python_install_build_deps(pkg_dir: Path) -> None:
         run(["sudo", "mk-build-deps", "-i", "-r", "-t", "apt-get -y", str(control)], check=False, cwd=pkg_dir)
 
 
-def python_build_with_gbp(pkg_dir: Path) -> None:
+def deb_build_env() -> dict[str, str]:
     env = os.environ.copy()
-    env["DEB_BUILD_OPTIONS"] = f"parallel={PARALLEL}"
+    options = [opt for opt in env.get("DEB_BUILD_OPTIONS", "").split() if opt]
+    if PARALLEL and not any(opt.startswith("parallel=") for opt in options):
+        options.append(f"parallel={PARALLEL}")
+    if options:
+        env["DEB_BUILD_OPTIONS"] = " ".join(options)
+    return env
+
+
+def python_build_with_gbp(pkg_dir: Path) -> None:
+    env = deb_build_env()
     run(
         [
             "gbp",
@@ -373,8 +382,7 @@ def build_one_pkg(pkg_dir: Path) -> bool:
             python_build_with_gbp(pkg_dir)
         else:
             install_build_deps(pkg_dir)
-            env = os.environ.copy()
-            env["DEB_BUILD_OPTIONS"] = f"parallel={PARALLEL}"
+            env = deb_build_env()
             current_branch = subprocess.run(
                 ["git", "rev-parse", "--abbrev-ref", "HEAD"],
                 cwd=pkg_dir,

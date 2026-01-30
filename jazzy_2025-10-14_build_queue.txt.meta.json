@@ -1,1 +1,66 @@
-{}
+{
+  "ament-package": {
+    "path": "/workspace/jazzy/ament-package",
+    "kinds": {
+      "debian": {
+        "extra_args": []
+      }
+    }
+  },
+  "ament-cmake-core": {
+    "path": "/workspace/jazzy/ament-cmake-core",
+    "kinds": {
+      "debian": {
+        "extra_args": []
+      }
+    }
+  },
+  "ros-workspace": {
+    "path": "/workspace/jazzy/ros-workspace",
+    "kinds": {
+      "debian": {
+        "extra_args": []
+      }
+    }
+  },
+  "ament-cmake-python": {
+    "path": "/workspace/jazzy/ament-cmake-python",
+    "kinds": {
+      "debian": {
+        "extra_args": []
+      }
+    }
+  },
+  "ament-lint": {
+    "path": "/workspace/jazzy/ament-lint",
+    "kinds": {
+      "debian": {
+        "extra_args": []
+      }
+    }
+  },
+  "gtest-vendor": {
+    "path": "/workspace/jazzy/gtest-vendor",
+    "kinds": {
+      "debian": {
+        "extra_args": []
+      }
+    }
+  },
+  "ament-cmake-test": {
+    "path": "/workspace/jazzy/ament-cmake-test",
+    "kinds": {
+      "debian": {
+        "extra_args": []
+      }
+    }
+  },
+  "ament-flake8": {
+    "path": "/workspace/jazzy/ament-flake8",
+    "kinds": {
+      "debian": {
+        "extra_args": []
+      }
+    }
+  }
+}

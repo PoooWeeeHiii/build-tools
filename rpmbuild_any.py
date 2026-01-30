@@ -24,6 +24,7 @@ YUM_SECTION = os.environ.get("YUM_SECTION", "release")
 BLOOM_BIN = os.environ.get("BLOOM_BIN", "bloom-generate")
 SKIP_DEBUG = int(os.environ.get("SKIP_DEBUG", "1"))
 VERBOSE = int(os.environ.get("VERBOSE", "0"))
+SKIP_CHECK = os.environ.get("AGIROS_SKIP_TESTS", os.environ.get("RPMBUILD_NOCHECK", "0")).lower() not in {"", "0", "false", "no"}
 
 REQUIRED_CMDS = ("rpmbuild", "rpmdev-setuptree", "git", "python3", "dnf")
 
@@ -209,6 +210,9 @@ def build_one_pkg(pkg_dir: Path) -> bool:
                 "_debugsource_packages 0",
             ]
         )
+
+    if SKIP_CHECK and "--nocheck" not in rpmb_args:
+        rpmb_args.append("--nocheck")
 
     try:
         run(rpmb_args, cwd=pkg_dir)
